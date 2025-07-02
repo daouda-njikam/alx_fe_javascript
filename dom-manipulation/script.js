@@ -121,29 +121,13 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-// Création du formulaire et ajout des événements
+// Création du formulaire d'ajout
 createAddQuoteForm();
+
+// Ajout des événements sur les boutons déjà présents dans index.html
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
-
-// Création des boutons Import et Export dans le DOM
-const controlsDiv = document.createElement("div");
-
-// Bouton Export
-const exportBtn = document.createElement("button");
-exportBtn.id = "exportQuotes";
-exportBtn.textContent = "Export Quotes as JSON";
-exportBtn.onclick = exportToJsonFile;
-controlsDiv.appendChild(exportBtn);
-
-// Input Import
-const importInput = document.createElement("input");
-importInput.type = "file";
-importInput.id = "importFile";
-importInput.accept = ".json";
-importInput.addEventListener('change', importFromJsonFile);
-controlsDiv.appendChild(importInput);
-
-document.body.appendChild(controlsDiv);
+document.getElementById("exportQuotes").addEventListener("click", exportToJsonFile);
+document.getElementById("importFile").addEventListener("change", importFromJsonFile);
 
 // Affiche la dernière citation au chargement
 showLastQuote();
