@@ -19,28 +19,47 @@ function saveQuotes() {
 // Tableau des citations en mémoire
 let quotes = loadQuotes();
 
-// Affiche une citation aléatoire et mémorise dans sessionStorage
-function showRandomQuote() {
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[randomIndex];
-  const quoteDisplay = document.getElementById("quoteDisplay");
-  quoteDisplay.innerHTML = `<p><strong>${quote.category}</strong>: "${quote.text}"</p>`;
-  sessionStorage.setItem('lastQuote', JSON.stringify(quote));
-}
+// Fonction pour récupérer les catégories uniques et remplir le select
+function populateCategories() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>';
 
-// Affiche la dernière citation vue en session, sinon une aléatoire
-function showLastQuote() {
-  const lastQuote = sessionStorage.getItem('lastQuote');
-  if (lastQuote) {
-    const quote = JSON.parse(lastQuote);
-    const quoteDisplay = document.getElementById("quoteDisplay");
-    quoteDisplay.innerHTML = `<p><strong>${quote.category}</strong>: "${quote.text}"</p>`;
-  } else {
-    showRandomQuote();
+  const categories = [...new Set(quotes.map(q => q.category))];
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
+
+  // Restaurer la sélection précédente
+  const savedCategory = localStorage.getItem('selectedCategory');
+  if (savedCategory && (savedCategory === 'all' || categories.includes(savedCategory))) {
+    categoryFilter.value = savedCategory;
   }
 }
 
-// Ajoute une nouvelle citation depuis les inputs, sauvegarde, et affiche
+// Affiche une citation aléatoire filtrée par catégorie
+function filterQuotes() {
+  const selectedCategory = document.getElementById('categoryFilter').value;
+  localStorage.setItem('selectedCategory', selectedCategory);
+
+  const filteredQuotes = selectedCategory === 'all'
+    ? quotes
+    : quotes.filter(q => q.category === selectedCategory);
+
+  if (filteredQuotes.length === 0) {
+    document.getElementById('quoteDisplay').innerHTML = '<p>No quotes found in this category.</p>';
+    return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+  const quote = filteredQuotes[randomIndex];
+  document.getElementById('quoteDisplay').innerHTML = `<p><strong>${quote.category}</strong>: "${quote.text}"</p>`;
+  sessionStorage.setItem('lastQuote', JSON.stringify(quote));
+}
+
+// Ajoute une nouvelle citation depuis les inputs, sauvegarde, met à jour filtre, affiche
 function addQuote() {
   const textInput = document.getElementById("newQuoteText");
   const categoryInput = document.getElementById("newQuoteCategory");
@@ -55,7 +74,8 @@ function addQuote() {
 
   quotes.push({ text: newText, category: newCategory });
   saveQuotes();
-  showRandomQuote();
+  populateCategories();
+  filterQuotes();
 
   textInput.value = "";
   categoryInput.value = "";
@@ -95,39 +115,3 @@ function exportToJsonFile() {
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
-  a.click();
-
-  URL.revokeObjectURL(url);
-}
-
-// Importer les citations depuis un fichier JSON
-function importFromJsonFile(event) {
-  const fileReader = new FileReader();
-  fileReader.onload = function(event) {
-    try {
-      const importedQuotes = JSON.parse(event.target.result);
-      if (Array.isArray(importedQuotes)) {
-        quotes.push(...importedQuotes);
-        saveQuotes();
-        alert('Quotes imported successfully!');
-        showRandomQuote();
-      } else {
-        alert('Invalid JSON format: Expected an array');
-      }
-    } catch (e) {
-      alert('Error parsing JSON file');
-    }
-  };
-  fileReader.readAsText(event.target.files[0]);
-}
-
-// Création du formulaire d'ajout
-createAddQuoteForm();
-
-// Ajout des événements sur les boutons déjà présents dans index.html
-document.getElementById("newQuote").addEventListener("click", showRandomQuote);
-document.getElementById("exportQuotes").addEventListener("click", exportToJsonFile);
-document.getElementById("importFile").addEventListener("change", importFromJsonFile);
-
-// Affiche la dernière citation au chargement
-showLastQuote();
